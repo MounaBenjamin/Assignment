@@ -1,0 +1,274 @@
+---
+title: "Unicef"
+subtitle: "Proportion of population with a handwashing facility with soap and water available at home"
+author: "Mouna Benjamin Thinagaran"
+date: "last-modified"
+date-format: "DD-MM-YYYY"
+description: "This Dashboard compares the Proportion of population with time period"
+format:
+  html:
+    embed-resources: true
+    smooth-scroll: true
+    theme: lux 
+    fontcolor: Grey
+    toc: true
+    toc-location: left
+    toc-title: Report Flow
+    toc-depth: 4
+    code-fold: true
+    code-line-numbers: true
+    code-tools: true
+    code-link: true
+    number-sections: true
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+## Introduction
+Simply washing hands with soap and water is one of the most effective ways to prevent the spread of diseases. It is simple, yet millions lack access to this basic practice. This report explores the global challenge of handwashing facilities and the importance of making them universally available. According to the UNICEF's WASH (Water,Sanitation and Hygiene) reports, while significant progress has been made, a substantial portionof the world's population still lacks access to basic handwashing facilities with soap and water at home.
+
+## Key Takeaways 
+- The good news is that progress is being made.
+- The Time series shows that there has been a significant increase in access to handwashing facilities globally since 2000. 
+- However the story does not stop there, we need to emphasise the *importance of continued efforts to achieve universal access*. 
+- Potential soolutions could be *infrastructural developments* and *hygiene promotion programs*.
+- Not everyone are equally affected by the lack of access, the GDP and GNI show that the funds are not being allocated towards the right and basic cause/
+- *We collectively as a community should focus specifically on vulnerable populations, like children and refugees*
+
+-**Donate to UNICEF, We as a community have a role to play**
+
+### Libraries
+```{r}
+#| label: libraries
+#| include: true
+#| echo: true
+library(tidyverse)
+library(ggplot2)
+library(ggthemes)
+library(magrittr)
+library(dplyr)
+library(sf)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(countrycode)
+library(ggrepel)
+library(readr)
+
+
+unicef_metadata <- read_csv("unicef_metadata.csv")
+unicef_indicator_1 <- read_csv("unicef_indicator_1.csv")
+
+
+```
+
+You can add options to executable code like this 
+
+### World Map
+```{r}
+#| label: map
+#| include: true
+#| echo: true
+world_map <- ne_countries(scale = "medium", returnclass = "sf")
+world_map <- merge(world_map, unicef_indicator_1, by.x = "iso_a3", by.y = "alpha_3_code")
+
+colors <- colorRampPalette(c("#f97e7e", "#670E10"))(n = 100) 
+ggplot() +
+  geom_sf(data = world_map, aes(fill = obs_value), color = "black") +
+  scale_fill_gradientn(colors = colors, name = "Proportion of population\nwith handwashing facility\nwith soap and water") +
+  theme_minimal() +
+  theme(panel.background = element_rect(fill = "grey")) +
+  labs(title = "Proportion of population with handwashing facility",
+       subtitle = "With soap and water at home",
+       caption = "Data source: UNICEF") +
+  coord_sf() +
+  theme(legend.position = "bottom")
+
+```
+### Time Series of Liberia
+From doing bad to Better
+```{r}
+#| label: time series
+#| include: true
+#| echo: true
+sorted_data <- unicef_indicator_1 %>%
+  arrange(obs_value)
+top_country <- head(sorted_data$country, 1)
+filtered_data <- unicef_indicator_1 %>%
+  filter(country == top_country)
+ggplot(filtered_data, aes(x = time_period, y = obs_value)) +
+  geom_line(color = "maroon") +
+  theme_minimal() +
+  labs(title = paste("Time Series Graph for", top_country),
+       subtitle = "Proportion of Population with Soap and Water at Home",
+       x = "Year",
+       y = "Proportion of Population",
+       caption = "Data source: UNICEF") +
+  scale_x_continuous(breaks = seq(2000, 2022, by = 2)) +
+  theme(legend.position = "none")
+
+```
+
+### Time Series of Bahrain
+For providing superior and constant hygiene 
+```{r}
+#| label: time series 2
+#| include: true
+#| echo: true
+sorted_data <- unicef_indicator_1 %>%
+  arrange(desc(obs_value))
+top_country <- head(sorted_data$country, 1)
+filtered_data <- unicef_indicator_1 %>%
+  filter(country == top_country)
+ggplot(filtered_data, aes(x = time_period, y = obs_value)) +
+  geom_line(color = "maroon") +
+  theme_minimal() +
+  labs(title = paste("Time Series Graph for", top_country),
+       subtitle = "Proportion of Population with Soap and Water at Home",
+       x = "Year",
+       y = "Proportion of Population",
+       caption = "Data source: UNICEF") +
+  scale_x_continuous(breaks = seq(2000, 2022, by = 2)) +
+  theme(legend.position = "none")
+```
+### Highest GDP Per Capita 2022
+```{r}
+unicef_metadata <- read_csv("unicef_metadata.csv")
+data_2022 <- unicef_metadata %>%
+  filter(year == 2022)
+sorted_data <- data_2022 %>%
+  arrange(desc(`GDP per capita (constant 2015 US$)`))
+top_5_countries <- head(sorted_data, 5)
+ggplot(top_5_countries, aes(x = reorder(country, `GDP per capita (constant 2015 US$)`), y = `GDP per capita (constant 2015 US$)`)) +
+  geom_bar(stat = "identity", fill = "#670E10") +
+  labs(title = "Top 5 Countries with Highest GDP per Capita in 2022",
+       x = "Country",
+       y = "GDP per Capita (constant 2015 US$)") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  theme_minimal()
+```
+### Lowest GDP Per Capita 2022
+```{r}
+unicef_metadata <- read_csv("unicef_metadata.csv")
+data_2022 <- unicef_metadata %>%
+  filter(year == 2022)
+sorted_data <- data_2022 %>%
+  arrange(`GDP per capita (constant 2015 US$)`)
+top_5_countries <- head(sorted_data, 5)
+ggplot(top_5_countries, aes(x = reorder(country, `GDP per capita (constant 2015 US$)`), y = `GDP per capita (constant 2015 US$)`)) +
+  geom_bar(stat = "identity", fill = "#5E1916") +
+  labs(title = "Top 5 Countries with Lowest GDP per Capita in 2022",
+       x = "Country",
+       y = "GDP per Capita (constant 2015 US$)") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  theme_minimal()
+```
+
+
+### highest GNI 2022
+```{r}
+unicef_metadata <- read_csv("unicef_metadata.csv")
+data_2022 <- unicef_metadata %>%
+  filter(year == 2022)
+sorted_data <- data_2022 %>%
+  arrange(desc(`GNI (current US$)`))
+top_5_countries <- head(sorted_data, 5)
+ggplot(top_5_countries, aes(x = reorder(country, `GNI (current US$)`), y = `GNI (current US$)`)) +
+  geom_bar(stat = "identity", fill = "#BC544B") +
+  labs(title = "Top 5 Countries with Highest GNI in 2022",
+       x = "Country",
+       y = "GNI (current US$)") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  theme_minimal()
+```
+### Lowest GNI 2022
+```{r}
+unicef_metadata <- read_csv("unicef_metadata.csv")
+data_2022 <- unicef_metadata %>%
+  filter(year == 2022)
+sorted_data <- data_2022 %>%
+  arrange(`GNI (current US$)`)
+top_5_countries <- head(sorted_data, 5)
+ggplot(top_5_countries, aes(x = reorder(country, `GNI (current US$)`), y = `GNI (current US$)`)) +
+  geom_bar(stat = "identity", fill = "#9F212C") +
+  labs(title = "Top 5 Countries with Lowest GNI in 2022",
+       x = "Country",
+       y = "GNI (current US$)") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  theme_minimal()
+```
+### Top 5 Countries with better Handwashing facilities 2022
+```{r}
+unicef_data <- read.csv("unicef_indicator_1.csv")
+data_2022 <- filter(unicef_data, time_period == 2022)
+top_5_well <- head(arrange(data_2022, desc(obs_value)), 5)
+top_5_bad <- tail(arrange(data_2022, desc(obs_value)), 5)
+ggplot(top_5_well, aes(x = obs_value, y = country)) +
+  geom_point(color = "#7C0A02") +  
+  geom_smooth(method = "lm", se = FALSE, color = "#808080") +  
+  labs(title = "Top 5 Countries Doing Well in 2022",
+       x = "Proportion of Population with Handwashing Facility",
+       y = "Country",
+       caption = "Data source: UNICEF") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+### Top 5 Countries with Poor Handwashing facilities 2022
+```{r}
+ggplot(top_5_bad, aes(x = obs_value, y = country)) +
+  geom_point(color = "#7C0A02") +  # Points as red color
+  geom_smooth(method = "lm", se = FALSE, color = "#808080") +  # Add regression line
+  labs(title = "Top 5 Countries Doing Poorly in 2022",
+       x = "Proportion of Population with Handwashing Facility",
+       y = "Country",
+       caption = "Data source: UNICEF") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+
+### World Scatter Map
+```{r}
+unicef_data <- read_csv("unicef_indicator_1.csv")
+ggplot(unicef_data, aes(x = time_period, y = obs_value)) +
+  geom_point(color = "#A83731") +  
+  geom_smooth(method = "loess", se = FALSE) + 
+  labs(title = "Proportion of Population with Handwashing Facility",
+       x = "Year",
+       y = "Proportion of Population",
+       caption = "Data source: UNICEF") +
+  theme_minimal()
+```
+
+## Relationship between Life Expectancy and hygiene
+Note: 114 rows with mission values have been removed. 
+- Adequate hygiene practices, such as regular handwashing with soap and water, play a crucial role in preventing the spread of infectious diseases. Diseases like diarrhea, respiratory infections, and various other communicable diseases are often transmitted through contaminated hands. 
+- Hygiene practices, particularly during infancy and childhood, can significantly impact child mortality rates. Children are more vulnerable to diseases due to their developing immune systems and frequent exposure to germs.
+-Hygiene practices are influenced by social and economic factors, including access to resources, education, and infrastructure. Communities with better access to sanitation facilities, education about hygiene practices, and healthcare services tend to have higher life expectancies.
+-**promoting good hygiene practices, including access to clean water, sanitation facilities, and education about hygiene, can have a significant positive impact on public health outcomes, reduce the burden of disease, and contribute to increased life expectancy.**
+```{r}
+unicef_metadata1 <- read_csv("unicef_metadata.csv", 
+    col_types = cols(alpha_2_code = col_skip(), 
+        alpha_3_code = col_skip(), numeric_code = col_skip(), 
+        year = col_skip(), `Population, total` = col_skip(), 
+        `GDP per capita (constant 2015 US$)` = col_skip(), 
+        `GNI (current US$)` = col_skip(), 
+        `Inflation, consumer prices (annual %)` = col_skip(), 
+        `Military expenditure (% of GDP)` = col_skip()))
+unicef_indicator_1 <- read.csv("unicef_indicator_1.csv")
+indicator_2022 <- filter(unicef_indicator_1, time_period == 2022)
+joined_data <- inner_join(unicef_metadata1, indicator_2022, by = "country")
+selected_data <- select(joined_data, country, `Life expectancy at birth, total (years)`, obs_value)
+ggplot(selected_data, aes(x = `Life expectancy at birth, total (years)`, y = obs_value)) +
+  geom_point() +
+  labs(title = "Relationship between Life Expectancy and Handwashing Facility",
+       x = "Life Expectancy at Birth (years)",
+       y = "Proportion of Population with Handwashing Facility") +
+  theme_minimal()
+
+```
+
+## Conclusion 
+Overall these insights underscore the importance of socioeconomic factors in determining access to basic hygiene services and highlight the need for targeted interventions to address disparities and improve public health outcomes globally.
